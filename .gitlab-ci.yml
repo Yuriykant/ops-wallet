@@ -44,6 +44,6 @@ deploy:
     name: production
   resource_group: production
   script:
-    - rsync -a --delete dist/ yuriy@91.107.217.210:/home/yuriy/newsfeed-frontend/dist
+    - rsync -a --delete dist/ yuriy@91.107.217.210
   only:
     - main
