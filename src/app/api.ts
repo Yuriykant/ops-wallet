@@ -6,13 +6,14 @@ import {
   query,
   orderBy,
   addDoc,
-  Timestamp,
   getDoc,
   doc,
   updateDoc,
   deleteDoc,
 } from 'firebase/firestore';
-import { CardsAPI, CardColor, OperationAPI, OperationType } from './types';
+import { CardsAPI, CardColor } from '../features/cards/types';
+import { OperationAPI, OperationType } from '../features/operations/types';
+import moment from 'moment';
 
 export const initializeAPI = (): void => {
   initializeApp({
@@ -58,10 +59,13 @@ export const apiGetCards = async (): Promise<CardsAPI[]> => {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data() as Omit<CardsAPI, 'id'>;
+      const timestampMoment = moment();
+      const formattedCreated = timestampMoment.toDate();
 
       result.push({
         id: doc.id,
         ...data,
+        created: formattedCreated.toString(),
       });
     });
   } catch (error) {
@@ -71,7 +75,7 @@ export const apiGetCards = async (): Promise<CardsAPI[]> => {
   return result;
 };
 
-interface CardSaveData {
+export interface CardSaveData {
   number: string;
   balance: number;
   color: CardColor;
@@ -80,7 +84,7 @@ interface CardSaveData {
 export const apiSaveNewCard = async (data: CardSaveData): Promise<CardsAPI | null> => {
   const newDoc: Omit<CardsAPI, 'id'> = {
     ...data,
-    created: Timestamp.now(),
+    created: new Date().toString(),
   };
   const db = getFirestore();
 
@@ -148,8 +152,6 @@ export const apiGetOperation = async (id: string): Promise<OperationAPI | null> 
   } catch (error) {
     return Promise.reject(error);
   }
-
-  return null;
 };
 
 export const apiGetOperations = async (): Promise<OperationAPI[]> => {
@@ -162,10 +164,13 @@ export const apiGetOperations = async (): Promise<OperationAPI[]> => {
 
     querySnapshot.forEach((doc) => {
       const data = doc.data() as Omit<OperationAPI, 'id'>;
+      const timestampMoment = moment();
+      const formattedCreated = timestampMoment.toDate();
 
       result.push({
         id: doc.id,
         ...data,
+        created: formattedCreated.toString(),
       });
     });
   } catch (error) {
@@ -175,7 +180,7 @@ export const apiGetOperations = async (): Promise<OperationAPI[]> => {
   return result;
 };
 
-interface OperationSaveData {
+export interface OperationSaveData {
   name: string;
   value: number;
   type: OperationType;
@@ -185,7 +190,7 @@ interface OperationSaveData {
 export const apiSaveNewOperation = async (data: OperationSaveData): Promise<OperationAPI | null> => {
   const newDoc: Omit<OperationAPI, 'id'> = {
     ...data,
-    created: Timestamp.now(),
+    created: new Date().toString(),
   };
   const db = getFirestore();
 

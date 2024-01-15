@@ -1,8 +1,10 @@
-import React, { FC, useContext } from "react";
-import { Modal, Form, Input, message, Radio } from "antd";
-import { CardColor } from "../../types";
-import { apiSaveNewCard, apiUpdateCard } from "../../api";
-import { Context } from "../../store/context";
+import React, { FC } from 'react';
+import { useDispatch } from 'react-redux';
+import { Modal, Form, Input, message, Radio } from 'antd';
+import { CardColor } from '../../types';
+import { updateCard } from '../../actions';
+import { addCardApi } from '../../slice';
+import { Dispatch } from '../../../../app/store';
 
 interface Props {
   isOpenModal: boolean;
@@ -19,16 +21,9 @@ interface CardFormData {
   color: CardColor;
 }
 
-export const CardModal: FC<Props> = ({
-  isOpenModal,
-  closeModal,
-  id,
-  cardNumber = "",
-  balance = "",
-  color = ""
-}) => {
+export const CardModal: FC<Props> = ({ isOpenModal, closeModal, id, cardNumber = '', balance = '', color = '' }) => {
+  const dispatch = useDispatch<Dispatch>();
   const [form] = Form.useForm();
-  const { cards, setCards } = useContext(Context);
 
   const onCancel = () => {
     form.resetFields();
@@ -40,30 +35,17 @@ export const CardModal: FC<Props> = ({
     const data = {
       color: formData.color,
       balance: parseFloat(formData.balance),
-      number: `${formData.number.slice(0, 4)} **** **** ${formData.number.slice(
-        -4
-      )}`
+      number: `${formData.number.slice(0, 4)} **** **** ${formData.number.slice(-4)}`,
     };
 
     if (id) {
-      apiUpdateCard(id, data).then((newCard) => {
-        if (newCard) {
-          setCards(cards.map((item) => {
-            if (item.id === id) {
-              return newCard;
-            }
-            return item;
-          }));
-        }
-        message.success("Карта обновлена!");
+      dispatch(updateCard(id, data)).then(() => {
+        message.success('Карта обновлена!');
         onCancel();
       });
     } else {
-      apiSaveNewCard(data).then((newCard) => {
-        if (newCard) {
-          setCards([newCard, ...cards]);
-        }
-        message.success("Карта сохранена!");
+      dispatch(addCardApi(data)).then(() => {
+        message.success('Карта сохранена!');
         onCancel();
       });
     }
@@ -84,12 +66,7 @@ export const CardModal: FC<Props> = ({
       closable
     >
       <Form form={form} layout="vertical" onFinish={onValid} autoComplete="off">
-        <Form.Item
-          label="Цвет"
-          name="color"
-          initialValue={color}
-          rules={[{ required: true }]}
-        >
+        <Form.Item label="Цвет" name="color" initialValue={color} rules={[{ required: true }]}>
           <Radio.Group>
             <Radio.Button value="blue">Синий</Radio.Button>
             <Radio.Button value="cyan">Бирюзовый</Radio.Button>
@@ -101,16 +78,11 @@ export const CardModal: FC<Props> = ({
           name="number"
           label="Номер карты"
           initialValue={cardNumber}
-          rules={[{ required: true }, { type: "string", min: 16, max: 19 }]}
+          rules={[{ required: true }, { type: 'string', min: 16, max: 19 }]}
         >
           <Input placeholder="1111 1111 1111 1111" />
         </Form.Item>
-        <Form.Item
-          name="balance"
-          label="Текущий баланс ₽"
-          initialValue={balance}
-          rules={[{ required: true }]}
-        >
+        <Form.Item name="balance" label="Текущий баланс ₽" initialValue={balance} rules={[{ required: true }]}>
           <Input placeholder="Сумма в рублях" />
         </Form.Item>
       </Form>

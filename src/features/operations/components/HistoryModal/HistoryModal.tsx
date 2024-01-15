@@ -1,13 +1,11 @@
-import React, { FC, useContext } from "react";
-import { Modal, Form, Input, message, Radio, Select } from "antd";
-import { OperationType } from "../../types";
-import {
-  apiSaveNewOperation,
-  apiUpdateOperation,
-
-} from "../../api";
-import { Context } from "../../store/context";
-
+import React, { FC } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Modal, Form, Input, message, Radio, Select } from 'antd';
+import { OperationType } from '../../types';
+import { updateOperation, addOperation } from '../../actions';
+import { getCards } from '../../../cards/selectors';
+import { CardsAPI } from '../../../cards/types';
+import { Dispatch } from 'app/store';
 
 interface Props {
   isOpenModal: boolean;
@@ -30,13 +28,14 @@ export const HistoryModal: FC<Props> = ({
   isOpenModal,
   closeModal,
   id,
-  title = "",
-  text = "",
-  balance = "",
-  isIncome = false
+  title = '',
+  text = '',
+  balance = '',
+  isIncome = false,
 }) => {
   const [form] = Form.useForm();
-  const { cards, operations, setOperations } = useContext(Context);
+  const dispatch = useDispatch<Dispatch>();
+  const cards = useSelector(getCards);
 
   const onCancel = () => {
     form.resetFields();
@@ -49,28 +48,17 @@ export const HistoryModal: FC<Props> = ({
       name: formData.name,
       value: parseFloat(formData.value),
       type: formData.type,
-      cardNumber: formData.cardNumber
+      cardNumber: formData.cardNumber,
     };
 
     if (id) {
-      apiUpdateOperation(id, data).then((newOperation) => {
-        if (newOperation) {
-          setOperations(operations.map((item) => {
-            if (item.id === id) {
-              return newOperation;
-            }
-            return item;
-          }));
-        }
-        message.success("Операция обновлена!");
+      dispatch(updateOperation(id, data)).then(() => {
+        message.success('Операция обновлена!');
         onCancel();
       });
     } else {
-      apiSaveNewOperation(data).then((newOperation) => {
-        if (newOperation) {
-          setOperations([newOperation, ...operations]);
-        }
-        message.success("Операция сохранена!");
+      dispatch(addOperation(data)).then(() => {
+        message.success('Операция сохранена!');
         onCancel();
       });
     }
@@ -91,45 +79,25 @@ export const HistoryModal: FC<Props> = ({
       closable
     >
       <Form form={form} layout="vertical" onFinish={onValid} autoComplete="off">
-        <Form.Item
-          label="Тип"
-          name="type"
-          initialValue={isIncome ? "income" : "expense"}
-          rules={[{ required: true }]}
-        >
+        <Form.Item label="Тип" name="type" initialValue={isIncome ? 'income' : 'expense'} rules={[{ required: true }]}>
           <Radio.Group>
             <Radio.Button value="income">Доход</Radio.Button>
             <Radio.Button value="expense">Расход</Radio.Button>
           </Radio.Group>
         </Form.Item>
-        <Form.Item
-          name="name"
-          label="Название платежа"
-          initialValue={title}
-          rules={[{ required: true }]}
-        >
+        <Form.Item name="name" label="Название платежа" initialValue={title} rules={[{ required: true }]}>
           <Input placeholder="Продукты" />
         </Form.Item>
-        <Form.Item
-          name="cardNumber"
-          label="Карта"
-          initialValue={text}
-          rules={[{ required: true }]}
-        >
+        <Form.Item name="cardNumber" label="Карта" initialValue={text} rules={[{ required: true }]}>
           <Select placeholder="Выберите карту">
-            {cards.map((item) => (
+            {cards.map((item: CardsAPI) => (
               <Select.Option key={item.id} value={item.number}>
                 {item.number}
               </Select.Option>
             ))}
           </Select>
         </Form.Item>
-        <Form.Item
-          name="value"
-          label="Сумма ₽"
-          initialValue={balance}
-          rules={[{ required: true }]}
-        >
+        <Form.Item name="value" label="Сумма ₽" initialValue={balance} rules={[{ required: true }]}>
           <Input placeholder="Сумма в рублях" />
         </Form.Item>
       </Form>

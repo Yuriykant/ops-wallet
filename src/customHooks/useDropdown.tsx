@@ -1,16 +1,16 @@
-import React, { useContext } from 'react';
+import React from 'react';
+import { useDispatch } from 'react-redux';
 import { useState } from 'react';
 import { Modal, MenuProps } from 'antd';
 import { ExclamationCircleOutlined } from '@ant-design/icons';
 
-import { apiDeleteCard, apiDeleteOperation } from '../api';
-import { Context } from '../store/context';
-
+import { deleteCard } from '../features/cards/actions';
+import { deleteOperation } from '../features/operations/actions';
+import { Dispatch } from '../app/store';
 
 export const useDropdown = (id: string, cardNumber?: string | null) => {
+  const dispatch = useDispatch<Dispatch>();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const { cards, setCards } = useContext(Context)
-
 
   const showEditModal = () => {
     setIsEditModalVisible(true);
@@ -22,23 +22,20 @@ export const useDropdown = (id: string, cardNumber?: string | null) => {
 
   const showDeleteConfirm = () => {
     Modal.confirm({
-      title: cardNumber ? "Удалить карту?" : 'Удалить операцию?',
+      title: cardNumber ? 'Удалить карту?' : 'Удалить операцию?',
       icon: <ExclamationCircleOutlined />,
       content: 'Отменить удаление будет невозможно',
       cancelText: 'Отменить',
       okText: 'Удалить',
       async onOk() {
         if (cardNumber) {
-          await apiDeleteCard(id);
-          setCards(cards.filter((item) => item.id !== id));
-        };
-        return apiDeleteOperation(id);
+          dispatch(deleteCard(id));
+        }
+        return dispatch(deleteOperation(id));
       },
-      onCancel() { },
+      onCancel() {},
     });
   };
-
-
 
   const items: MenuProps['items'] = [
     {
@@ -51,13 +48,12 @@ export const useDropdown = (id: string, cardNumber?: string | null) => {
     },
   ];
 
-
   const handleMenuClick: MenuProps['onClick'] = (e) => {
     const { key } = e;
     if (key === '1') {
-      showEditModal()
+      showEditModal();
     } else if (key === '2') {
-      showDeleteConfirm()
+      showDeleteConfirm();
     }
   };
 
@@ -66,6 +62,5 @@ export const useDropdown = (id: string, cardNumber?: string | null) => {
     onClick: handleMenuClick,
   };
 
-  return { isEditModalVisible, closeEditModal, menuProps }
-
+  return { isEditModalVisible, closeEditModal, menuProps };
 };
